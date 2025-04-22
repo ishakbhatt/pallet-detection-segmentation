@@ -1,0 +1,1 @@
+python3 scripts/prepare.py Pallets-20250418T161920Z-001.zip
