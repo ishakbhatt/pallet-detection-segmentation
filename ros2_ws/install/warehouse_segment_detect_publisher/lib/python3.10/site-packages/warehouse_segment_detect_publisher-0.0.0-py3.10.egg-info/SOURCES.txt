@@ -11,9 +11,9 @@ setup.py
 launch/warehouse_segment_detect.launch.py
 resource/warehouse_segment_detect_publisher
 src/warehouse_segment_detect_publisher/__init__.py
+src/warehouse_segment_detect_publisher/cv2_to_trt_input.py
 src/warehouse_segment_detect_publisher/ground_segmentor.py
 src/warehouse_segment_detect_publisher/inference.py
-src/warehouse_segment_detect_publisher/main.py
 src/warehouse_segment_detect_publisher/pallet_detector.py
 test/test_copyright.py
 test/test_flake8.py

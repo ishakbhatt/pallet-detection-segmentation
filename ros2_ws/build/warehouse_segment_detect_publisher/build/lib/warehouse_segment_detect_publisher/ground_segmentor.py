@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+from warehouse_segment_detect_publisher.cv2_to_trt_input import cv2_to_trt_input
 from ultralytics import YOLO
 import cv2
 import os
@@ -13,7 +14,7 @@ class GroundSegmentor(Node):
     Takes a depth image as input and publishes an annotated segmentation result.
     """
 
-    def __init__(self, depth_image, models_path):
+    def __init__(self, depth_image, models_path, optimize):
         """
         Initializes the node, loads the YOLO model, and prepares the publisher and input.
 
@@ -21,11 +22,11 @@ class GroundSegmentor(Node):
             depth_image (np.ndarray): Depth image (as a NumPy array) used for segmentation.
         """
         super().__init__('ground_segmentor_node')
-        self.model = YOLO(os.path.join(models_path, 'segmentation', 'best.pt')) 
-        self.depth_image = depth_image  # Input depth image
-        self.bridge = CvBridge() 
 
-        # Publisher for the segmented output image
+        self.model = YOLO(os.path.join(models_path, 'segmentation', 'best.pt')) 
+        self.depth_image = depth_image 
+        self.bridge = CvBridge() 
+        self.optimize = optimize
         self.ground_segment_publisher_ = self.create_publisher(Image, 'ground_segmentation/image', 10)
 
 
@@ -34,9 +35,20 @@ class GroundSegmentor(Node):
         Runs inference on depth image, overlays the segmentation results,
         and publishes the annotated image to ground_segmentation/image.
         """
-        results = self.model(self.depth_image)  # Run segmentation model
-        annotated_frame = results[0].plot()  # Draw segmentation results on the image
+        # broaden variable scope
+        results = 0 
 
-        ros_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')  # Convert to ROS image message
-        self.ground_segment_publisher_.publish(ros_msg)  # Publish the annotated image
+        if self.optimize:
+            # 
+            self.model.export(format="engine")
+            tensorrt_model = YOLO("best.engine")
+            tensorrt_input = cv2_to_trt_input(self.depth_image)
+            results = tensorrt_model(tensorrt_input)
+        else:
+            results = self.model(self.depth_image)  
+        
+        annotated_frame = results[0].plot()  
+
+        ros_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')  
+        self.ground_segment_publisher_.publish(ros_msg)  #
         self.get_logger().info('Ground segmented.')

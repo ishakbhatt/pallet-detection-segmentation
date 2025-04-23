@@ -3,6 +3,7 @@ os
 shutil
 sys
 torch
+numpy
 ultralytics
 supervision
 tqdm

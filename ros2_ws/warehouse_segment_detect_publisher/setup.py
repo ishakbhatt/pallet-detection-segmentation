@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'inference = warehouse_segment_detect_publisher.main:main',
+            'inference = warehouse_segment_detect_publisher.inference:main',
         ],
     },
 )
