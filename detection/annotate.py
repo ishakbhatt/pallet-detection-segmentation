@@ -5,7 +5,7 @@ import cv2
 from ultralytics import YOLO
 import supervision as sv
 
-def annotate_by_inference(weights_path, data_path)
+def annotate_by_inference(weights_path, data_path):
     """
     Runs inference to annotate new images
     """
@@ -45,5 +45,6 @@ def annotate_by_inference(weights_path, data_path)
                     f.write(f"{cls_id} {x_center:.6f} {y_center:.6f} {box_w:.6f} {box_h:.6f}\n")
 
 if __name__ == "__main__":
-    weights_path = 
+    weights_path = '/home/isha/repos/pallets-detection-segmentation/runs/train23/best.pt'
+    data_path = '/home/isha/repos/pallets-detection-segmentation/data/Pallets'
     annotate_by_inference(weights_path, data_path)

@@ -15,6 +15,7 @@ class ImageAugmentation:
         label_dir, label_filename = os.path.split(label_path)
         augment_label_filename = os.path.splitext(label_filename)[0] + augmentation_method + os.path.splitext(label_filename)[1]
         shutil.copy(label_path, os.path.join(label_dir, augment_label_filename))
+        return augment_label_filename
 
     def _convert_to_pil(self, image):
         # Convert numpy array (BGR) to PIL Image (RGB)
@@ -31,7 +32,6 @@ class ImageAugmentation:
     def _brighten(self, image, label_path, factor):
         if factor <= 1.0:
             raise ValueError("Brightness factor must be > 1.0")
-        self._copy_label(label_path, "_BRIGHT")
         image_pil = self._convert_to_pil(image)
         enhancer = ImageEnhance.Brightness(image_pil)
         brightened = enhancer.enhance(factor)
@@ -40,7 +40,6 @@ class ImageAugmentation:
     def _darken(self, image, label_path, factor):
         if factor >= 1.0:
             raise ValueError("Darkening factor must be < 1.0")
-        self._copy_label(label_path, "_DARK")
         image_pil = self._convert_to_pil(image)
         enhancer = ImageEnhance.Brightness(image_pil)
         darkened = enhancer.enhance(factor)
@@ -82,29 +81,63 @@ class ImageAugmentation:
         return new_path
 
     def augment(self, image, image_path, label_path):
-        augmented_paths = []
-
+        augmented_image_paths = []
+        augmented_label_paths = []
         if random.random() < 1:
             brightened = self._brighten(image, label_path, 1.2)
-            self._save_augmented_image(brightened, image_path, "_BRIGHT")
-            augmented_paths.append(self._save_augmented_image(brightened, image_path, "_BRIGHT"))
+            augmented_label_paths.append(self._copy_label(label_path, "_BRIGHT"))
+            augmented_image_paths.append(self._save_augmented_image(brightened, image_path, "_BRIGHT"))
 
         if random.random() < 1:
             darkened = self._darken(image, label_path, 0.8)
-            self._save_augmented_image(darkened, image_path, "_DARK")
-            augmented_paths.append(self._save_augmented_image(darkened, image_path, "_DARK"))
+            augmented_label_paths.append(self._copy_label(label_path, "_DARK"))
+            augmented_image_paths.append(self._save_augmented_image(darkened, image_path, "_DARK"))
 
         if random.random() < 1:
             contrasted = self._contrast(image, label_path, 1.2)
-            self._save_augmented_image(contrasted, image_path, "_CONTRAST")
-            augmented_paths.append(self._save_augmented_image(contrasted, image_path, "_CONTRAST"))
+            augmented_label_paths.append(self._copy_label(label_path, "_CONTRAST"))
+            augmented_image_paths.append(self._save_augmented_image(contrasted, image_path, "_CONTRAST"))
 
         if random.random() < 1:
             blurred = self._blur(image, label_path, (3, 3))
-            self._save_augmented_image(blurred, image_path, "_BLUR")
-            augmented_paths.append(self._save_augmented_image(blurred, image_path, "_BLUR"))
+            augmented_label_paths.append(self._copy_label(label_path, "_BLUR"))
+            augmented_image_paths.append(self._save_augmented_image(blurred, image_path, "_BLUR"))
 
         if random.random() < 1:
             saturated = self._saturate(image, label_path, 1.2)
-            augmented_paths.append(self._save_augmented_image(saturated, image_path, "_SATURATED"))
-        return augmented_paths
+            augmented_label_paths.append(self._copy_label(label_path, "_SATURATED"))
+            augmented_image_paths.append(self._save_augmented_image(saturated, image_path, "_SATURATED"))
+
+        return augmented_image_paths, augmented_label_paths
+
+    def augment_and_shuffle_data(self, images_dir, labels_dir):
+        images = os.listdir(images_dir)
+        labels = os.listdir(labels_dir)
+
+        augmented_images = []
+        augmented_labels = []
+
+        for img_filename, label_filename in zip(images, labels):
+            img_path = os.path.join(images_dir, img_filename)
+            label_path = os.path.join(labels_dir, label_filename)
+            
+            image = cv2.imread(img_path)
+            
+            if image is None:
+                print(f"Warning: Failed to load image {img_path}, skipping.")
+                continue
+            
+            augmented_image_paths, augmented_label_paths = self.augment(image, img_path, label_path)
+
+            for augmented_image_path in augmented_image_paths:
+                augmented_images.append(augmented_image_path)
+                augmented_labels.append(label_path)
+
+        augmented_data_pairs = list(zip(augmented_images, augmented_labels))
+
+        random.shuffle(augmented_data_pairs)
+
+        shuffled_augmented_images = [pair[0] for pair in augmented_data_pairs]
+        shuffled_augmented_labels = [pair[1] for pair in augmented_data_pairs]
+
+        return shuffled_augmented_images, shuffled_augmented_labels
