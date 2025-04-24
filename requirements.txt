@@ -1,5 +1,6 @@
 zipfile
 os
+opencv-python
 shutil
 sys
 matplotlib
@@ -7,11 +8,12 @@ torch
 numpy
 ultralytics
 supervision
+random
 tqdm
 subprocess
 pathlib
-tensorrt
 rclpy
+pillow
 cv_bridge
 onnx
 onnxruntime-gpu
@@ -22,3 +24,4 @@ nvidia-pyindex
 nvidia-tensorrt
 onnxruntime-gpu==1.20.0
 pycuda
+argparse
