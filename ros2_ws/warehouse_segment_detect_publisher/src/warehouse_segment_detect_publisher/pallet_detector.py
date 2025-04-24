@@ -5,6 +5,8 @@ from std_msgs.msg import String
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
+import os
+
 from warehouse_segment_detect_publisher.cv2_to_trt_input import cv2_to_trt_input
 
 
@@ -22,10 +24,10 @@ class PalletDetector(Node):
             image (np.ndarray): Input image as a NumPy array to run inference on.
             optimize (bool): Whether or not to convert models to suitable for edge deployment.
         """
-        super().__init__('yolo_inference_node')
-
-        self.model = YOLO(os.path.join(models_path, 'segmentation', 'best.pt'))  
+        super().__init__('pallet_detector')
+        self.model = YOLO(os.path.join(models_path, 'detection', 'best.pt'))  
         self.image = image  
+        self.get_logger().info('start.')
         self.bridge = CvBridge()  
         self.optimize = optimize
         self.pallet_detector_publisher_ = self.create_publisher(Image, 'pallet_detector/image', 10)
@@ -35,16 +37,16 @@ class PalletDetector(Node):
         Runs inference on the input image, overlays the detection results, and publishes it.
         """
         results = 0 
+        self.get_logger().info('attempt detect.')
 
         if self.optimize:
-            # 
             self.model.export(format="engine")
             tensorrt_model = YOLO("best.engine")
             tensorrt_input = cv2_to_trt_input(self.image)
             results = tensorrt_model(tensorrt_input)
         else:
             results = self.model(self.image)  
-
+            
         annotated_frame = results[0].plot() 
 
         ros_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')  

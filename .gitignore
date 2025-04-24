@@ -1,4 +1,5 @@
 runs/
+runs/train*
 data/
 ros2_ws/build
 ros2_ws/install

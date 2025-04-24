@@ -10,7 +10,7 @@ from ultralytics import YOLO
 import supervision as sv
 torch.cuda.empty_cache()
 
-PREPROCESS = False
+PREPROCESS = True
 
 def train(data_yaml_path):
     print("Training in progress...")

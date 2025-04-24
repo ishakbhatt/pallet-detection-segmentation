@@ -8,6 +8,8 @@ from cv_bridge import CvBridge
 from ultralytics import YOLO
 from std_msgs.msg import String
 
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+
 from warehouse_segment_detect_publisher.ground_segmentor import GroundSegmentor
 from warehouse_segment_detect_publisher.pallet_detector import PalletDetector
 
@@ -27,7 +29,7 @@ class Zed2iInference(Node):
             models_path (str): path to models folder (default starts at top-level).
             optimize (bool): Whether or not to convert models to suitable for edge deployment.
         """
-        super().__init__('inference_node')
+        super().__init__('zed2i_inference_node')
 
         self.declare_parameter('image_topic', 'rgb/image_rect_color')
         self.declare_parameter('depth_topic', 'depth/depth_registered')
@@ -41,19 +43,23 @@ class Zed2iInference(Node):
 
         self.bridge = CvBridge()
 
+        # match qos for subscription
+        qos_profile = QoSProfile(depth=10)
+        qos_profile.reliability = ReliabilityPolicy.BEST_EFFORT
+
         # Subscribe to RGB image topic
         self.image_subscriber = self.create_subscription(
             Image, 
             self.image_topic, 
             self.image_callback, 
-            10)
+            qos_profile)
 
         # Subscribe to depth image topic
         self.depth_subscriber = self.create_subscription(
             Image, 
             self.depth_topic, 
             self.depth_callback, 
-            10)
+            qos_profile)
 
         self.get_logger().info(f"Subscribed to topics: {self.image_topic}, {self.depth_topic}")
 
