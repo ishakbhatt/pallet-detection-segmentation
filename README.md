@@ -22,10 +22,10 @@ Real-time ROS 2 package for detecting pallets and performing ground segmentation
 
 ## Performance Evaluation
 
-## Requirements
+## Tested on:
 - ROS 2 Humble
 - Python 3.10+
-- ZED SDK (for ZED2i camera)
+- CUDA 12.8
 
 
 ## Installation
@@ -42,13 +42,13 @@ source install/setup.bash
 
 ## Running the Node
 ### With Command Line Arguments (No Launch File):
+Topic names are passed, path to all the models, and the optimize flag if using the optimized model.
 ```bash
 ros2 run warehouse_segment_detect_publisher inference \
-  --ros-args \
-  -p image_topic:=rgb/image_rect_color \
-  -p depth_topic:=depth/depth_registered \
-  -p models_path:=./models \
-  -p optimize:=true
+--image_topic robot1/zed2i/left/image_rect_color \
+--depth_topic depth/depth_registered \
+--models_path ../models \
+--optimize
 ```
 
 ### With Launch File:
@@ -66,19 +66,55 @@ Launch file parameters can be edited in `ros2_ws/launch/warehouse_segment_detect
 | models_path  | string  | ./models                | Path to directory containing model files         |
 | optimize     | boolean | false                   | Enable optimization (TensorRT)             |
 
+## Pruning & Quantization with TensorRT
+The script for pruning & quantization is `convert_to_tensorrt.py`. It converts the model to `onnx` format, prunes the model, and then converts `FP32` to `FP16`. 
 
-## Directory Structure
+**Usage**: run `python3 convert_to_tensorrt.py -h` for the options:
+
 ```
-ros2_ws/
-├── src/
-│   └── warehouse_segment_detect_publisher/
-│       ├── inference.py
-│       ├── ground_segmentor.py
-│       ├── pallet_detector.py
-│       ├── ...
-├── launch/
-│   └── warehouse_segment_detect.launch.py
+Convert YOLOv8 .pt model to TensorRT .engine file
+
+options:
+  -h, --help            show this help message and exit
+  --models_path MODELS_PATH
+                        Path to the .pt file
+  --imgsz IMGSZ         Input image size (default: 416)
+  --inference_method INFERENCE_METHOD
+                        detection or segmentation
 ```
+
+The metrics of the original and improved model is below:
+
+| Operation    | best.onnx                  | best.slim.onnx                  |
+|--------------|----------------------------|---------------------------------|
+| **Model Name** | best.onnx                  | models/detection/best.slim.onnx |
+| **Model Info** | Op Set: 19 / IR Version: 9 | Op Set: 19 / IR Version: 9      |
+| **IN: images** | float32: (1, 3, 416, 416)  | float16: (1, 3, 416, 416)       |
+| **OUT: output0** | float32: (1, 5, 3549)    | float16: (1, 5, 3549)           |
+| **Add**       | 16                         | 16                              |
+| **Cast**      | 0                          | 6                               |
+| **Concat**    | 23                         | 23                              |
+| **Conv**      | 88                         | 88                              |
+| **Div**       | 1                          | 1                               |
+| **MatMul**    | 2                          | 2                               |
+| **MaxPool**   | 3                          | 3                               |
+| **Mul**       | 79                         | 79                              |
+| **Reshape**   | 8                          | 8                               |
+| **Resize**    | 2                          | 2                               |
+| **Sigmoid**   | 78                         | 78                              |
+| **Slice**     | 2                          | 2                               |
+| **Softmax**   | 2                          | 2                               |
+| **Split**     | 11                         | 11                              |
+| **Sub**       | 2                          | 2                               |
+| **Transpose** | 3                          | 3                               |
+| **Model Size**| 10.00 MB                   | 5.04 MB                         |
+| **Elapsed Time** |                        | 0.21 s                          |
+
+Note: `onnx_to_tensorrt` may throw an error:
+```
+[04/24/2025-13:24:39] [TRT] [W] Unable to determine GPU memory usage: no CUDA-capable device is detected
+```
+It is best to use `trtexec` by building [TensorRT](https://github.com/NVIDIA/TensorRT/?tab=readme-ov-file#tensorrt-open-source-software) and running the tool in the docker container. Place the `best.slim.onnx` in the top-level folder of `TensorRT`, start the docker container, run `trtexec --onnx=best.slim.onnx --saveEngine=best.engine`, and copy it back to `models/detection/` or `models/segmentation/` depending on the task.
 
 ## License
 Apache 2.0
