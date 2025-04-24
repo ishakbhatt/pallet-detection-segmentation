@@ -34,7 +34,7 @@ Both models were trained with an 80/20 split between training and val/test. The 
   - Best mAP@0.5: **0.672**
   - Best mAP@0.5:0.95: **0.593**
   
-The mAP@0.5 and 0.5:0.95 values are the best values found in `metrics/detection`. mAP@0.5 represents the mean Average Precision at a 0.5 intersection over union (amount of overlap between the ground truth and predicted boxes - IoU). About 97% of the boxes are correct predictions because they overlap with the ground truth by at least 50%. As far as mAP@0.5:0.95, there is a drop in the performance. This calculation averages the AP over a range of IoU thresholds instead of just at 0.5. We see a drop because as the IoU increments go up, it becomes more difficult for the ground truth and predicted boxes or masks to align that much more strictly.
+The mAP@0.5 and 0.5:0.95 values are the best values found in `metrics/detection` and `metrics/segmentation`. mAP@0.5 represents the mean Average Precision at a 0.5 intersection over union (amount of overlap between the ground truth and predicted boxes - IoU). About 97% of the boxes are correct predictions because they overlap with the ground truth by at least 50%. As far as mAP@0.5:0.95, there is a drop in the performance. This calculation averages the AP over a range of IoU thresholds instead of just at 0.5. We see a drop because as the IoU increments go up, it becomes more difficult for the ground truth and predicted boxes or masks to align that much more strictly.
 
 ## Tested on:
 - ROS 2 Humble
@@ -76,7 +76,7 @@ Launch file parameters can be edited in `ros2_ws/launch/warehouse_segment_detect
 |--------------|---------|-------------------------|--------------------------------------------------|
 | image_topic  | string  | rgb/image_rect_color    | ZED2i RGB topic name                             |
 | depth_topic  | string  | depth/depth_registered  | ZED2i Depth topic name                           |
-| models_path  | string  | ./models                | Path to directory containing model files         |
+| models_path  | string  | ../models                | Path to directory containing model files         |
 | optimize     | boolean | false                   | Enable optimization (TensorRT)             |
 
 ## Pruning & Quantization with TensorRT

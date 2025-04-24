@@ -37,16 +37,14 @@ class GroundSegmentor(Node):
         """
         # broaden variable scope
         results = 0 
-
         if self.optimize:
             #tensorrt_model = YOLO(os.path.join(models_path, 'segmentation', 'best.engine'))
             #tensorrt_input = cv2_to_trt_input(self.depth_image)
             #results = tensorrt_model(tensorrt_input)
-
             # TODO: TensorRT optimization needs further investigation to integrate for inference
             trt_inference = TensorRTInference(os.path.join(models_path, 'detection', 'best.engine'))
             results = trt_inference.infer(self.image)
-            
+
         else:
             results = self.model(self.depth_image)  
         
