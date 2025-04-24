@@ -1,5 +1,5 @@
 # Pallet Detection and Ground Segmentation (ROS 2)
-
+![](https://github.com/ishakbhatt/pallet-detection-segmentation/blob/master/segmented_ground.png)
 Real-time ROS 2 package for detecting pallets and performing ground segmentation using ZED2i camera input. This repository is designed for warehouse automation scenarios and is deployable on edge devices like NVIDIA Jetson Orin with optional model optimization via TensorRT. 
 
 ## Features
