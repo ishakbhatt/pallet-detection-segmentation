@@ -21,3 +21,4 @@ tensorrt
 nvidia-pyindex
 nvidia-tensorrt
 onnxruntime-gpu==1.20.0
+pycuda

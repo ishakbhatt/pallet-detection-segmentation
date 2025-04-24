@@ -49,7 +49,7 @@ cd ~/repos
 git clone https://github.com/ishakbhatt/pallet-detection-segmentation.git
 cd pallet-detection-segmentation/ros2_ws
 rosdep install --from-paths src --ignore-src -r -y
-colcon 
+colcon build
 source install/setup.bash
 ```
 
@@ -128,6 +128,8 @@ Note: `onnx_to_tensorrt` may throw an error:
 [04/24/2025-13:24:39] [TRT] [W] Unable to determine GPU memory usage: no CUDA-capable device is detected
 ```
 It is best to use `trtexec` by building [TensorRT](https://github.com/NVIDIA/TensorRT/?tab=readme-ov-file#tensorrt-open-source-software) and running the tool in the docker container. Place the `best.slim.onnx` in the top-level folder of `TensorRT`, start the docker container, run `trtexec --onnx=best.slim.onnx --saveEngine=best.engine`, and copy it back to `models/detection/` or `models/segmentation/` depending on the task.
+
+The `--optimize` flag currently gives a callback error. This needs to be further investigated. For now, the infrastructure is in place to convert to TensorRT and use an optimized model.
 
 ## License
 Apache 2.0

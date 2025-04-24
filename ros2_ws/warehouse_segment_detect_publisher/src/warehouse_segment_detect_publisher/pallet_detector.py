@@ -7,7 +7,7 @@ from ultralytics import YOLO
 import cv2
 import os
 
-from warehouse_segment_detect_publisher.cv2_to_trt_input import cv2_to_trt_input
+from warehouse_segment_detect_publisher.tensorrt_inference import TensorRTInference
 
 
 class PalletDetector(Node):
@@ -27,7 +27,6 @@ class PalletDetector(Node):
         super().__init__('pallet_detector')
         self.model = YOLO(os.path.join(models_path, 'detection', 'best.pt'))  
         self.image = image  
-        self.get_logger().info('start.')
         self.bridge = CvBridge()  
         self.optimize = optimize
         self.pallet_detector_publisher_ = self.create_publisher(Image, 'pallet_detector/image', 10)
@@ -37,13 +36,14 @@ class PalletDetector(Node):
         Runs inference on the input image, overlays the detection results, and publishes it.
         """
         results = 0 
-        self.get_logger().info('attempt detect.')
 
         if self.optimize:
-            self.model.export(format="engine")
-            tensorrt_model = YOLO("best.engine")
-            tensorrt_input = cv2_to_trt_input(self.image)
-            results = tensorrt_model(tensorrt_input)
+            #tensorrt_model = YOLO(os.path.join(models_path, 'detection', 'best.engine'))
+            #tensorrt_input = cv2_to_trt_input(self.image)
+            #results = tensorrt_model(tensorrt_input)
+            # TODO: TensorRT optimization needs further investigation to integrate for inference
+            trt_inference = TensorRTInference(os.path.join(models_path, 'detection', 'best.engine'))
+            results = trt_inference.infer(self.image)
         else:
             results = self.model(self.image)  
             

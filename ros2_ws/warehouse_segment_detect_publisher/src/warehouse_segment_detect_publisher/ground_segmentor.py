@@ -22,7 +22,6 @@ class GroundSegmentor(Node):
             depth_image (np.ndarray): Depth image (as a NumPy array) used for segmentation.
         """
         super().__init__('ground_segmentor')
-
         self.model = YOLO(os.path.join(models_path, 'segmentation', 'best.pt')) 
         self.depth_image = depth_image 
         self.bridge = CvBridge() 
@@ -40,14 +39,19 @@ class GroundSegmentor(Node):
         results = 0 
 
         if self.optimize:
-            tensorrt_model = YOLO(os.path.join(models_path, 'segmentation', 'best.engine'))
-            tensorrt_input = cv2_to_trt_input(self.depth_image)
-            results = tensorrt_model(tensorrt_input)
+            #tensorrt_model = YOLO(os.path.join(models_path, 'segmentation', 'best.engine'))
+            #tensorrt_input = cv2_to_trt_input(self.depth_image)
+            #results = tensorrt_model(tensorrt_input)
+
+            # TODO: TensorRT optimization needs further investigation to integrate for inference
+            trt_inference = TensorRTInference(os.path.join(models_path, 'detection', 'best.engine'))
+            results = trt_inference.infer(self.image)
+            
         else:
             results = self.model(self.depth_image)  
         
         annotated_frame = results[0].plot()  
 
         ros_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')  
-        self.ground_segment_publisher_.publish(ros_msg)  #
+        self.ground_segment_publisher_.publish(ros_msg) 
         self.get_logger().info('Ground segmented.')

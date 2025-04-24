@@ -90,7 +90,7 @@ class Zed2iInference(Node):
             msg (sensor_msgs.msg.Image): Incoming depth image message.
         """
         try:
-            cv_depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+            cv_depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough') # used bgr8 for sanity check
             segmentor = GroundSegmentor(cv_depth, self.models_path, self.optimize)
             segmentor.segment()
         except Exception as e:
