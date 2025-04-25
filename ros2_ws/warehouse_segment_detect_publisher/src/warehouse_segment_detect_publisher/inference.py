@@ -48,25 +48,25 @@ class Zed2iInference(Node):
         qos_profile.reliability = ReliabilityPolicy.BEST_EFFORT
 
         # Subscribe to RGB image topic
-        self.image_subscriber = self.create_subscription(
+        self.detect_subscriber = self.create_subscription(
             Image, 
             self.image_topic, 
-            self.image_callback, 
+            self.detect_callback, 
             qos_profile)
 
-        # Subscribe to depth image topic
-        self.depth_subscriber = self.create_subscription(
+
+        self.segment_subscriber = self.create_subscription(
             Image, 
-            self.depth_topic, 
-            self.depth_callback, 
+            self.image_topic, 
+            self.segment_callback, 
             qos_profile)
 
-        self.get_logger().info(f"Subscribed to topics: {self.image_topic}, {self.depth_topic}")
+        self.get_logger().info(f"Subscribed to topics: {self.image_topic}") # , {self.depth_topic}")
 
 
-    def image_callback(self, msg):
+    def detect_callback(self, msg):
         """
-        RGB image callback.
+        Detector callback.
         Performs pallet detection on the received image.
 
         Args:
@@ -78,23 +78,23 @@ class Zed2iInference(Node):
             detector.bridge = self.bridge
             detector.detect()
         except Exception as e:
-            self.get_logger().error('image callback error.')
+            self.get_logger().error('Detect callback error.')
 
 
-    def depth_callback(self, msg):
+    def segment_callback(self, msg):
         """
-        Depth image callback.
-        Performs ground segmentation on the received depth image.
+        Segmentation callback.
+        Performs ground segmentation on the received image.
 
         Args:
-            msg (sensor_msgs.msg.Image): Incoming depth image message.
+            msg (sensor_msgs.msg.Image): Incoming image message.
         """
         try:
-            cv_depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='32FC1') # used bgr8 for sanity check
+            cv_depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8') 
             segmentor = GroundSegmentor(cv_depth, self.models_path, self.optimize)
             segmentor.segment()
         except Exception as e:
-            self.get_logger().error('Depth callback error.')
+            self.get_logger().error('Segment callback error.')
 
 
 def main(args=None):
